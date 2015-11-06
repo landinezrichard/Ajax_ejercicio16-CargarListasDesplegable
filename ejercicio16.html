@@ -1,0 +1,200 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<title>Ejercicio 16 - Lista Desplegable provincia XML</title>
+ 
+<script type="text/javascript">
+	var net = new Object();
+ 
+	net.READY_STATE_UNINITIALIZED=0; 
+	net.READY_STATE_LOADING=1; 
+	net.READY_STATE_LOADED=2; 
+	net.READY_STATE_INTERACTIVE=3; 
+	net.READY_STATE_COMPLETE=4; 
+	 
+	// Constructor
+	net.CargadorContenidos = function(url, funcion, funcionError, metodo, parametros, contentType) {
+	  this.url = url;
+	  this.req = null;
+	  this.onload = funcion;
+	  this.onerror = (funcionError) ? funcionError : this.defaultError;
+	  this.cargaContenidoXML(url, metodo, parametros, contentType);
+	}
+	 
+	net.CargadorContenidos.prototype = {
+	  cargaContenidoXML: function(url, metodo, parametros, contentType) {
+		if(window.XMLHttpRequest) {
+		  this.req = new XMLHttpRequest();
+		}
+		else if(window.ActiveXObject) {
+		  this.req = new ActiveXObject("Microsoft.XMLHTTP");
+		}
+	 
+		if(this.req) {
+		  try {
+			var loader = this;
+			this.req.onreadystatechange = function() {
+			  loader.onReadyState.call(loader);
+			}
+			this.req.open(metodo, url, true);
+			if(contentType) {
+			  this.req.setRequestHeader("Content-Type", contentType);
+			}
+			this.req.send(parametros);
+			} catch(err) {
+			  this.onerror.call(this);
+			}
+		}
+	  },
+	 
+	  onReadyState: function() {
+		var req = this.req; 
+		var ready = req.readyState; 
+		if(ready == net.READY_STATE_COMPLETE) { 
+		  var httpStatus = req.status; 
+		  if(httpStatus == 200 || httpStatus == 0) { 
+			this.onload.call(this);
+		  }
+		  else {
+			this.onerror.call(this);
+		  }
+		}
+	  },
+	 
+	  defaultError: function() {
+		alert("Se ha producido un error al obtener los datos"
+		  + "\n\nreadyState:" + this.req.readyState
+		  + "\nstatus: " + this.req.status
+		  + "\nheaders: " + this.req.getAllResponseHeaders());
+	  }
+	}
+	
+	function muestraContenido() {
+	  alert(this.req.responseText);
+	}
+	 
+	function cargaProvincias() {
+		var url="http://vacanwallpapers.byethost6.com/cargaProvinciasXML.php"; 
+		var funcion=procesaProvincia;
+		var funcionError=null;
+		var metodo="POST";
+		var parametros="nocache="+Math.random();
+		var contentType="application/x-www-form-urlencoded";
+		var cargador = new net.CargadorContenidos(url,funcion,funcionError,metodo,parametros,contentType);
+	}
+	
+	function cargaMunicipios() {
+		var lista=document.getElementById("provincias");
+		var indiceSeleccionado=lista.selectedIndex;
+		var opcionSeleccionada=lista.options[indiceSeleccionado];
+		var valorSeleccionado=opcionSeleccionada.value;		
+		
+		var url="http://vacanwallpapers.byethost6.com/cargaMunicipiosXML.php"; 
+		var funcion=procesaMunicipio;
+		var funcionError=null;
+		var metodo="POST";
+		var parametros="provincia="+valorSeleccionado+"&nocache="+Math.random();
+		var contentType="application/x-www-form-urlencoded";
+		var cargador = new net.CargadorContenidos(url,funcion,funcionError,metodo,parametros,contentType);
+	}
+
+
+/*La respuesta del servidor, para procesaProvincia() es:
+
+<provincias>
+  <provincia>
+    <codigo>01</codigo>
+    <nombre>Álava</nombre>
+  </provincia>
+  ...
+</provincias>
+
+*/
+
+	function procesaProvincia() {
+		//Se Recibe la respuesta del servidor con:		
+		//this.req.responseXML  -->si es XML
+		//this.req.responseText  -->si es Texto
+		var documento_xml=this.req.responseXML;
+		var root=documento_xml.getElementsByTagName("provincias")[0];
+		  
+		var nom_provincia="";
+		var cod_provincia="";
+		var nuevaOpcion;
+		var lista1=document.getElementById("provincias");
+		  
+		var provincia=root.getElementsByTagName("provincia");
+		for(var i=0;i<provincia.length;++i){  
+		
+			cod_provincia=provincia[i].getElementsByTagName("codigo")[0].firstChild.nodeValue;
+			nom_provincia=provincia[i].getElementsByTagName("nombre")[0].firstChild.nodeValue;
+			
+			nuevaOpcion=new Option(nom_provincia, cod_provincia);
+			var opciones=lista1.options;
+			opciones[i+1]=nuevaOpcion;
+		}	  
+	}
+	
+/*La respuesta del servidor, para procesaMunicipio() es:
+
+<municipios>
+  <municipio>
+    <codigo>0014</codigo>
+    <nombre>Alegría-Dulantzi</nombre>
+  </municipio>
+  ...
+</municipios>
+
+*/	
+	
+	function procesaMunicipio() {
+		//Se Recibe la respuesta del servidor con:		
+		//this.req.responseXML  -->si es XML
+		//this.req.responseText  -->si es Texto
+		var documento_xml=this.req.responseXML;
+		var root=documento_xml.getElementsByTagName("municipios")[0];
+		  
+		var nom_municipio="";
+		var cod_municipio="";
+		var nuevaOpcion;
+		var lista2=document.getElementById("municipios");
+		  
+		var municipio=root.getElementsByTagName("municipio");
+		for(var i=0;i<municipio.length;++i){  
+		
+			cod_municipio=municipio[i].getElementsByTagName("codigo")[0].firstChild.nodeValue;
+			nom_municipio=municipio[i].getElementsByTagName("nombre")[0].firstChild.nodeValue;
+			
+			nuevaOpcion=new Option(nom_municipio, cod_municipio);
+			var opciones=lista2.options;
+			opciones[i+1]=nuevaOpcion;
+		}	  
+	}
+ 
+	window.onload = function() {
+		cargaProvincias();
+		var lista1=document.getElementById("provincias");
+		lista1.onchange=cargaMunicipios;
+		
+	}
+ 
+</script>
+</head>
+ 
+<body>
+<h1>Cargar Municipios, despues de seleccionar la Provincia</h1>
+<form>
+	Elige la Provincia:
+	<select id="provincias" name="provincias">
+		<option value="">-Selecciona-</option>
+	</select>
+	Elige un Municipio:
+	<select id="municipios" name="municipios">
+		<option value="">-Selecciona-</option>
+	</select>
+  
+</form> 
+</body>
+</html>
